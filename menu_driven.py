@@ -1,25 +1,77 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
+import sqlite3 as sql
 
-Menu = Flask(__name__)
+connection = sql.connect("employeedata.db", check_same_thread=False)
+listofemployee = connection.execute("select name from sqlite_master where type='table' AND name='employee'").fetchall()
 
-@Menu.route("/")
-def add():
+if listofemployee != []:
+    print("Table exist already")
+
+else:
+    connection.execute('''create table employee(
+                                ID integer primary key autoincrement,
+                                Empcode text,
+                                Empname text,
+                                age integer,
+                                address text,
+                                email text,
+                                designation text,
+                                salary integer                            
+                                companyname text                             
+                                )''')
+    print("Table Created Successfully")
+
+
+employee = Flask(__name__)
+
+@employee.route("/", methods = ["GET","POST"])
+def Employee_details():
+    if request.method == "POST":
+        getEmpcode = request.form["empcode"]
+        getEmpname = request.form["empname"]
+        getage = request.form["age"]
+        getaddress = request.form["address"]
+        getemail = request.form["email"]
+        getdesignation = request.form["designation"]
+        getsalary = request.form["salary"]
+        getcompanyname = request.form["companyname"]
+        print(getEmpcode)
+        print(getEmpname)
+        print(getage)
+        print(getaddress)
+        print(getemail)
+        print(getdesignation)
+        print(getsalary)
+        print(getcompanyname)
+
+        try:
+           connection.execute("insert into employee(Empcode,Empname,age,address,email,designation,salary)\
+                           values('"+getEmpcode+"','"+getEmpname+"',"+getage+",'"+getaddress+"','"+getemail+"','"+getdesignation+"',"+getsalary+")")
+           connection.commit()
+           print("Student Data Added Successfully.")
+        except Exception as e:
+            print("Error occured ", e)
+
     return render_template("add.html")
 
-@Menu.route("/search")
-def search():
+@employee.route("/search")
+def Search():
     return render_template("search.html")
 
-@Menu.route("/update")
-def update():
+@employee.route("/update")
+def Update():
     return render_template("update.html")
 
-
-@Menu.route("/delete")
-def delete():
+@employee.route("/delete")
+def Delete():
     return render_template("delete.html")
 
-
+@employee.route("/viewall")
+def viewAll():
+    cursor = connection.cursor()
+    count = cursor.execute("select * from employee")
+    result = cursor.fetchall()
+    return render_template("viewall.html", employee=result)
 
 if __name__ == "__main__":
-    Menu.run()
+    employee.run()
